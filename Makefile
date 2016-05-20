@@ -5,6 +5,7 @@ LUAVER	:= 5.2
 
 # Path to libui
 
+CFLAGS	+= -g
 CFLAGS	+= -Wall
 CFLAGS	+= -shared -fPIC
 CFLAGS	+= $(shell pkg-config --cflags --libs lua-$(LUAVER))

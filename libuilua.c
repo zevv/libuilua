@@ -18,8 +18,6 @@
 
 #define CREATE_META(n) \
 	luaL_newmetatable(L, "libui." #n);  \
-	lua_pushvalue(L, -1); \
-	lua_setfield(L, -2, "__index"); \
 	luaL_setfuncs(L, meta_ ## n, 0);
 
 #define CREATE_OBJECT(t, c) \
@@ -27,7 +25,9 @@
 	w->L = L; \
 	w->control = uiControl(c); \
 	w->type = TYPE_ ## t; \
+	lua_newtable(L); \
 	luaL_getmetatable(L, "libui." #t); \
+	lua_setfield(L, -2, "__index"); \
 	lua_setmetatable(L, -2);
 
 
@@ -88,9 +88,15 @@ static void callback(struct wrap *w)
 int l_ControlShow(lua_State *L)
 {
 	uiControlShow(UI_CAST(1, Control));
-	return 0;
+	RETURN_SELF;
 }
 
+
+int l_ControlDestroy(lua_State *L)
+{
+	printf("destroy not implemented, garbage collection needs to be implemented\n");
+	return 0;
+}
 
 
 /*
@@ -162,6 +168,10 @@ int l_GroupSetTitle(lua_State *L)
 int l_GroupSetChild(lua_State *L)
 {
 	uiGroupSetChild(UI_CAST(1, Group), UI_CAST(2, Control));
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, 2);
+	lua_pushboolean(L, 1);
+	lua_settable(L, -3);
 	RETURN_SELF;
 }
 
@@ -331,18 +341,26 @@ int l_NewWindow(lua_State *L)
 		luaL_checknumber(L, 2),
 		lua_toboolean(L, 3)
 	));
+	lua_pushvalue(L, -1);
+	lua_pushboolean(L, 1);
+	lua_settable(L, LUA_REGISTRYINDEX);
 	return 1;
 }
 
 int l_WindowSetChild(lua_State *L)
 {
 	uiWindowSetChild(UI_CAST(1, Window), UI_CAST(2, Control));
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, 2);
+	lua_pushboolean(L, 1);
+	lua_settable(L, -3);
 	RETURN_SELF;
 }
 
 static struct luaL_Reg meta_Window[] = {
 	{ "SetChild",            l_WindowSetChild },
 	{ "Show",                l_ControlShow },
+	{ "Destroy",             l_ControlDestroy },
 	{ NULL }
 };
 
@@ -366,6 +384,9 @@ int l_NewHorizontalBox(lua_State *L)
 int l_BoxAppend(lua_State *L)
 {
 	uiBoxAppend(UI_CAST(1, Box), UI_CAST(2, Control), lua_toboolean(L, 3));
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, 2);
+	luaL_ref(L, -2);
 	RETURN_SELF;
 }
 
