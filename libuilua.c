@@ -206,9 +206,7 @@ static void on_button_clicked(uiButton *b, void *data)
 
 int l_ButtonSetText(lua_State *L)
 {
-	struct wrap *w = lua_touserdata(L, 1);
-	const char *text = luaL_checkstring(L, 2);
-	uiButtonSetText(uiButton(w->control), text);
+	uiButtonSetText(CAST_ARG(1, Button), luaL_checkstring(L, 2));
 	RETURN_SELF;
 }
 
@@ -245,9 +243,7 @@ static void on_checkbox_toggled(uiCheckbox *c, void *data)
 
 int l_CheckboxSetText(lua_State *L)
 {
-	struct wrap *w = lua_touserdata(L, 1);
-	const char *text = luaL_checkstring(L, 2);
-	uiCheckboxSetText(uiCheckbox(w->control), text);
+	uiCheckboxSetText(CAST_ARG(1, Checkbox), luaL_checkstring(L, 2));
 	RETURN_SELF;
 }
 
@@ -288,12 +284,11 @@ static void on_combobox_selected(uiCombobox *c, void *data)
 
 int l_ComboboxAppend(lua_State *L)
 {
-	struct wrap *w = lua_touserdata(L, 1);
 	int n = lua_gettop(L);
 	int i;
 	for(i=2; i<=n; i++) {
 		const char *text = luaL_checkstring(L, n);
-		uiComboboxAppend(uiCombobox(w->control), text);
+		uiComboboxAppend(CAST_ARG(1, Combobox), text);
 	}
 	RETURN_SELF;
 }
@@ -418,9 +413,7 @@ int l_LabelText(lua_State *L)
 
 int l_LabelSetText(lua_State *L)
 {
-	struct wrap *w = lua_touserdata(L, 1);
-	const char *text = luaL_checkstring(L, 2);
-	uiLabelSetText(uiLabel(w->control), text);
+	uiLabelSetText(CAST_ARG(1, Label), luaL_checkstring(L, 2));
 	RETURN_SELF;
 }
 
@@ -470,12 +463,11 @@ int l_NewRadioButtons(lua_State *L)
 
 int l_RadioButtonsAppend(lua_State *L)
 {
-	struct wrap *w = lua_touserdata(L, 1);
 	int n = lua_gettop(L);
 	int i;
 	for(i=2; i<=n; i++) {
 		const char *text = luaL_checkstring(L, i);
-		uiRadioButtonsAppend(uiRadioButtons(w->control), text);
+		uiRadioButtonsAppend(CAST_ARG(1, RadioButtons), text);
 	}
 	RETURN_SELF;
 }
