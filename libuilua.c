@@ -12,7 +12,7 @@
  * Boilerplate macros
  */
 
-#define UI_CAST(n, type) ui ## type(((struct wrap *)lua_touserdata(L, n))->control)
+#define CAST_ARG(n, type) ui ## type(((struct wrap *)lua_touserdata(L, n))->control)
 
 #define RETURN_SELF lua_pushvalue(L, 1); return 1;
 
@@ -40,6 +40,7 @@ enum control_type {
 	TYPE_Checkbox,
 	TYPE_Combobox,
 	TYPE_Control,
+	TYPE_DateTimePicker,
 	TYPE_Group,
 	TYPE_Label,
 	TYPE_ProgressBar,
@@ -93,23 +94,21 @@ int l_gc(lua_State *L)
 	struct wrap *w = lua_touserdata(L, 1);
 	uint32_t s = w->control->TypeSignature;
 	printf("gc %p %c%c%c%c\n", w->control, s >> 24, s >> 16, s >> 8, s >> 0);
+
 	return 0;
 
-	uiControl *control = UI_CAST(1, Control);
-
+	uiControl *control = CAST_ARG(1, Control);
 	uiControl *parent = uiControlParent(control);
 	
 	if(parent) {
 		if(parent->TypeSignature == 0x57696E64) {
-			uiWindowSetChild(uiWindow(parent), NULL);
+			//uiWindowSetChild(uiWindow(parent), NULL);
 		}
-		if(parent->TypeSignature == 0x426F784C) {
-			uiWindowSetChild(uiWindow(parent), NULL);
+		if(parent->TypeSignature == 0x47727062) {
+			//uiGroupSetChild(uiWindow(parent), NULL);
 		}
-		printf("  Unparent %p %p\n", control, parent);
-		uiControlSetParent(control, NULL);
 	}
-	uiControlDestroy(control);
+	//uiControlDestroy(control);
 
 	return 0;
 }
@@ -120,7 +119,7 @@ int l_gc(lua_State *L)
 
 int l_ControlShow(lua_State *L)
 {
-	uiControlShow(UI_CAST(1, Control));
+	uiControlShow(CAST_ARG(1, Control));
 	RETURN_SELF;
 }
 
@@ -161,7 +160,7 @@ int l_BoxAppend(lua_State *L)
 
 	for(i=2; i<=n; i++) {
 		if(lua_isuserdata(L, i)) {
-			uiBoxAppend(UI_CAST(1, Box), UI_CAST(i, Control), stretchy);
+			uiBoxAppend(CAST_ARG(1, Box), CAST_ARG(i, Control), stretchy);
 			lua_getmetatable(L, 1);
 			lua_pushvalue(L, i);
 			luaL_ref(L, -2);
@@ -172,13 +171,13 @@ int l_BoxAppend(lua_State *L)
 
 int l_BoxPadded(lua_State *L)
 {
-	lua_pushnumber(L, uiBoxPadded(UI_CAST(1, Box)));
+	lua_pushnumber(L, uiBoxPadded(CAST_ARG(1, Box)));
 	return 1;
 }
 
 int l_BoxSetPadded(lua_State *L)
 {
-	uiBoxSetPadded(UI_CAST(1, Box), luaL_checknumber(L, 2));
+	uiBoxSetPadded(CAST_ARG(1, Box), luaL_checknumber(L, 2));
 	RETURN_SELF;
 }
 
@@ -319,6 +318,33 @@ static struct luaL_Reg meta_Combobox[] = {
 };
 
 
+/*
+ * Date/Timepicker
+ */
+
+int l_NewDateTimePicker(lua_State *L)
+{
+	CREATE_OBJECT(DateTimePicker, uiNewDateTimePicker());
+	return 1;
+}
+
+int l_NewDatePicker(lua_State *L)
+{
+	CREATE_OBJECT(DateTimePicker, uiNewDatePicker());
+	return 1;
+}
+
+int l_NewTimePicker(lua_State *L)
+{
+	CREATE_OBJECT(DateTimePicker, uiNewTimePicker());
+	return 1;
+}
+
+static struct luaL_Reg meta_DateTimePicker[] = {
+	{ NULL }
+};
+
+
 
 
 /*
@@ -335,20 +361,20 @@ int l_NewGroup(lua_State *L)
 
 int l_GroupTitle(lua_State *L)
 {
-	lua_pushstring(L, uiGroupTitle(UI_CAST(1, Group)));
+	lua_pushstring(L, uiGroupTitle(CAST_ARG(1, Group)));
 	return 1;
 }
 
 int l_GroupSetTitle(lua_State *L)
 {
 	const char *title = luaL_checkstring(L, 2);
-	uiGroupSetTitle(UI_CAST(1, Group), title);
+	uiGroupSetTitle(CAST_ARG(1, Group), title);
 	RETURN_SELF;
 }
 
 int l_GroupSetChild(lua_State *L)
 {
-	uiGroupSetChild(UI_CAST(1, Group), UI_CAST(2, Control));
+	uiGroupSetChild(CAST_ARG(1, Group), CAST_ARG(2, Control));
 	lua_getmetatable(L, 1);
 	lua_pushvalue(L, 2);
 	lua_pushboolean(L, 1);
@@ -358,13 +384,13 @@ int l_GroupSetChild(lua_State *L)
 
 int l_GroupMargined(lua_State *L)
 {
-	lua_pushnumber(L, uiGroupMargined(UI_CAST(1, Group)));
+	lua_pushnumber(L, uiGroupMargined(CAST_ARG(1, Group)));
 	return 1;
 }
 
 int l_GroupSetMargined(lua_State *L)
 {
-	uiGroupSetMargined(UI_CAST(1, Group), luaL_checknumber(L, 2));
+	uiGroupSetMargined(CAST_ARG(1, Group), luaL_checknumber(L, 2));
 	RETURN_SELF;
 }
 
@@ -392,7 +418,7 @@ int l_NewLabel(lua_State *L)
 
 int l_LabelText(lua_State *L)
 {
-	lua_pushstring(L, uiLabelText(UI_CAST(1, Label)));
+	lua_pushstring(L, uiLabelText(CAST_ARG(1, Label)));
 	return 1;
 }
 
@@ -427,7 +453,7 @@ int l_NewProgressBar(lua_State *L)
 int l_ProgressBarSetValue(lua_State *L)
 {
 	double value = luaL_checknumber(L, 2);
-	uiProgressBarSetValue(UI_CAST(1, ProgressBar), value);
+	uiProgressBarSetValue(CAST_ARG(1, ProgressBar), value);
 	RETURN_SELF;
 }
 
@@ -499,14 +525,14 @@ int l_NewSlider(lua_State *L)
 
 int l_SliderValue(lua_State *L)
 {
-	lua_pushnumber(L, uiSliderValue(UI_CAST(1, Slider)));
+	lua_pushnumber(L, uiSliderValue(CAST_ARG(1, Slider)));
 	return 1;
 }
 
 int l_SliderSetValue(lua_State *L)
 {
 	double value = luaL_checknumber(L, 2);
-	uiSliderSetValue(UI_CAST(1, Slider), value);
+	uiSliderSetValue(CAST_ARG(1, Slider), value);
 	RETURN_SELF;
 }
 
@@ -546,14 +572,14 @@ int l_NewSpinbox(lua_State *L)
 
 int l_SpinboxValue(lua_State *L)
 {
-	lua_pushnumber(L, uiSpinboxValue(UI_CAST(1, Spinbox)));
+	lua_pushnumber(L, uiSpinboxValue(CAST_ARG(1, Spinbox)));
 	return 1;
 }
 
 int l_SpinboxSetValue(lua_State *L)
 {
 	double value = luaL_checknumber(L, 2);
-	uiSpinboxSetValue(UI_CAST(1, Spinbox), value);
+	uiSpinboxSetValue(CAST_ARG(1, Spinbox), value);
 	RETURN_SELF;
 }
 
@@ -593,7 +619,7 @@ int l_TabAppend(lua_State *L)
 	int n = lua_gettop(L);
 	int i;
 	for(i=2; i<=n; i+=2) {
-		uiTabAppend(UI_CAST(1, Tab), luaL_checkstring(L, i+0), UI_CAST(i+1, Control));
+		uiTabAppend(CAST_ARG(1, Tab), luaL_checkstring(L, i+0), CAST_ARG(i+1, Control));
 		lua_getmetatable(L, 1);
 		lua_pushvalue(L, i+1);
 		luaL_ref(L, -2);
@@ -622,15 +648,12 @@ int l_NewWindow(lua_State *L)
 		luaL_checknumber(L, 2),
 		lua_toboolean(L, 3)
 	));
-	//lua_pushvalue(L, -1);
-	//lua_pushboolean(L, 1);
-	//lua_settable(L, LUA_REGISTRYINDEX);
 	return 1;
 }
 
 int l_WindowSetChild(lua_State *L)
 {
-	uiWindowSetChild(UI_CAST(1, Window), UI_CAST(2, Control));
+	uiWindowSetChild(CAST_ARG(1, Window), CAST_ARG(2, Control));
 	lua_getmetatable(L, 1);
 	lua_pushvalue(L, 2);
 	lua_pushboolean(L, 1);
@@ -640,7 +663,7 @@ int l_WindowSetChild(lua_State *L)
 
 int l_WindowSetMargined(lua_State *L)
 {
-	uiWindowSetMargined(UI_CAST(1, Window), luaL_checknumber(L, 2));
+	uiWindowSetMargined(CAST_ARG(1, Window), luaL_checknumber(L, 2));
 	RETURN_SELF;
 }
 
@@ -698,6 +721,9 @@ static struct luaL_Reg lui_table[] = {
 	{ "NewButton",              l_NewButton },
 	{ "NewCheckbox",            l_NewCheckbox },
 	{ "NewCombobox",            l_NewCombobox },
+	{ "NewDateTimePicker",      l_NewDateTimePicker },
+	{ "NewDatePicker",          l_NewDatePicker },
+	{ "NewTimePicker",          l_NewTimePicker },
 	{ "NewEditableCombobox",    l_NewEditableCombobox },
 	{ "NewGroup",               l_NewGroup },
 	{ "NewHorizontalBox",       l_NewHorizontalBox },
@@ -724,11 +750,12 @@ int luaopen_libuilua(lua_State *L)
 	CREATE_META(Button)
 	CREATE_META(Checkbox)
 	CREATE_META(Combobox)
+	CREATE_META(DateTimePicker)
 	CREATE_META(Group)
 	CREATE_META(Label)
 	CREATE_META(ProgressBar)
-	CREATE_META(Separator)
 	CREATE_META(RadioButtons)
+	CREATE_META(Separator)
 	CREATE_META(Slider)
 	CREATE_META(Spinbox)
 	CREATE_META(Tab)

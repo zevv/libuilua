@@ -12,7 +12,10 @@ win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 					ui.NewButton("Button"),
 					ui.NewCheckbox("Checkbox"),
 					ui.NewLabel("Label"),
-					ui.NewHorizontalSeparator()
+					ui.NewHorizontalSeparator(),
+					ui.NewDatePicker(),
+					ui.NewDateTimePicker(),
+					ui.NewTimePicker()
 				)
 			), 
 			ui.NewVerticalBox():Append(
@@ -57,7 +60,7 @@ win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 win:Show();
 
 
-win = nil
+--win = nil
 collectgarbage("collect")
 collectgarbage("collect")
 collectgarbage("collect")
