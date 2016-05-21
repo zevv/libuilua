@@ -18,6 +18,7 @@ spinbox = ui.NewSpinbox(0, 100):OnChanged(update)
 slider = ui.NewSlider(0, 100):OnChanged(update)
 progressbar = ui.NewProgressBar(0, 100)
 
+
 local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 	ui.NewVerticalBox():Append(
 		ui.NewHorizontalBox():Append(
@@ -67,13 +68,7 @@ local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 	)
 )
 
-win:Show();
-
-
---win = nil
-collectgarbage("collect")
-collectgarbage("collect")
-collectgarbage("collect")
+win:Show()
 
 ui.Main()
 

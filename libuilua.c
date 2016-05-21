@@ -24,7 +24,6 @@
 	struct wrap *w = lua_newuserdata(L, sizeof(struct wrap)); \
 	w->L = L; \
 	w->control = uiControl(c); \
-	w->type = TYPE_ ## t; \
 	lua_newtable(L); \
 	luaL_getmetatable(L, "libui." #t); \
 	lua_setfield(L, -2, "__index"); \
@@ -33,29 +32,9 @@
 	lua_setmetatable(L, -2);
 
 
-
-enum control_type {
-	TYPE_Box,
-	TYPE_Button,
-	TYPE_Checkbox,
-	TYPE_Combobox,
-	TYPE_Control,
-	TYPE_DateTimePicker,
-	TYPE_Group,
-	TYPE_Label,
-	TYPE_ProgressBar,
-	TYPE_RadioButtons,
-	TYPE_Separator,
-	TYPE_Slider,
-	TYPE_Spinbox,
-	TYPE_Tab,
-	TYPE_Window,
-};
-
 struct wrap {
 	lua_State *L;
 	uiControl *control;
-	enum control_type type;
 };
 
 
