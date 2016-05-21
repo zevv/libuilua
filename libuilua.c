@@ -22,7 +22,6 @@
 
 #define CREATE_OBJECT(t, c) \
 	struct wrap *w = lua_newuserdata(L, sizeof(struct wrap)); \
-	w->L = L; \
 	w->control = uiControl(c); \
 	lua_newtable(L); \
 	luaL_getmetatable(L, "libui." #t); \
@@ -33,7 +32,6 @@
 
 
 struct wrap {
-	lua_State *L;
 	uiControl *control;
 };
 
