@@ -37,6 +37,7 @@ enum control_type {
 	TYPE_Button,
 	TYPE_Control,
 	TYPE_Group,
+	TYPE_Label,
 	TYPE_ProgressBar,
 	TYPE_Separator,
 	TYPE_Slider,
@@ -195,6 +196,43 @@ static struct luaL_Reg meta_Group[] = {
 	{ "SetMargined",          l_GroupSetMargined },
 	{ NULL }
 };
+
+
+/*
+ * Label
+ */
+
+int l_NewLabel(lua_State *L)
+{
+	CREATE_OBJECT(Label, uiNewLabel(
+		luaL_checkstring(L, 1)
+	));
+	return 1;
+}
+
+int l_LabelText(lua_State *L)
+{
+	lua_pushstring(L, uiLabelText(UI_CAST(1, Label)));
+	return 1;
+}
+
+int l_LabelSetText(lua_State *L)
+{
+	struct wrap *w = lua_touserdata(L, 1);
+	const char *text = luaL_checkstring(L, 2);
+	uiLabelSetText(uiLabel(w->control), text);
+	RETURN_SELF;
+}
+
+
+static struct luaL_Reg meta_Label[] = {
+	{ "Text",                 l_LabelText },
+	{ "SetText",              l_LabelSetText },
+	{ NULL }
+};
+
+
+
 
 /*
  * ProgressBar
@@ -459,6 +497,7 @@ static struct luaL_Reg lui_table[] = {
 	{ "NewHorizontalBox",       l_NewHorizontalBox },
 	{ "NewHorizontalSeparator", l_NewHorizontalSeparator },
 	{ "NewGroup",               l_NewGroup },
+	{ "NewLabel",               l_NewLabel },
 	{ "NewSlider",              l_NewSlider },
 	{ "NewSpinbox",             l_NewSpinbox },
 	{ "NewProgressBar",         l_NewProgressBar },
@@ -471,15 +510,16 @@ static struct luaL_Reg lui_table[] = {
 int luaopen_libuilua(lua_State *L)
 {
 
+
 	CREATE_META(Box)
 	CREATE_META(Button)
 	CREATE_META(Group)
+	CREATE_META(Label)
+	CREATE_META(ProgressBar)
 	CREATE_META(Separator)
 	CREATE_META(Slider)
 	CREATE_META(Spinbox)
-	CREATE_META(ProgressBar)
 	CREATE_META(Window)
-
 	luaL_newlib(L, lui_table);
 	return 1;
 }
