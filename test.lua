@@ -3,10 +3,21 @@
 ui = require "libuilua"
 
 ui.Init()
-						
-local spinbox = ui.NewSpinbox(0, 100),
-local slider = ui.NewSlider(0, 100),
-local progressbar = ui.NewProgressBar(0, 100)
+					
+
+local spinbox, slider, progressbar
+
+local function update(control)
+	local v = control:Value()
+	spinbox:SetValue(v)
+	slider:SetValue(v)
+	progressbar:SetValue(v)
+end
+
+spinbox = ui.NewSpinbox(0, 100):OnChanged(update) 
+slider = ui.NewSlider(0, 100):OnChanged(update)
+progressbar = ui.NewProgressBar(0, 100)
+
 
 win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 	ui.NewVerticalBox():Append(

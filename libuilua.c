@@ -59,43 +59,61 @@ struct wrap {
 };
 
 
-static struct wrap *create_callback_data(lua_State *L, int n)
+static void create_callback_data(lua_State *L, int n)
 {
-	struct wrap *w = lua_touserdata(L, n);
-	lua_pushlightuserdata(L, w);
+	/* Push registery key: userdata pointer to control */
+
+	lua_pushlightuserdata(L, CAST_ARG(1, Control));
+	
+	/* Create table with callback data */
+	
 	lua_newtable(L);
+	lua_pushvalue(L, 1);
+	lua_setfield(L, -2, "udata");
 	lua_pushvalue(L, 2);
 	lua_setfield(L, -2, "fn");
 	lua_pushvalue(L, 3);
 	lua_setfield(L, -2, "data");
+
+	/* Store in registry */
+
 	lua_settable(L, LUA_REGISTRYINDEX);
 
-	return w;
 }
 
-static void callback(struct wrap *w)
+static void callback(lua_State *L, void *control)
 {
-	lua_State *L = w->L;
+	/* Find table with callback data in registry */
 
-	lua_pushlightuserdata(L, w);
+	lua_pushlightuserdata(L, control);
 	lua_gettable(L, LUA_REGISTRYINDEX);
 
-	luaL_checktype(L, 1, LUA_TTABLE);
+	/* Get function, control userdata and callback data */
 
+	luaL_checktype(L, 1, LUA_TTABLE);
 	lua_getfield(L, 1, "fn");
 	luaL_checktype(L, -1, LUA_TFUNCTION);
+	lua_getfield(L, 1, "udata");
+	luaL_checktype(L, -1, LUA_TUSERDATA);
 	lua_getfield(L, 1, "data");
-	lua_call(L, 1, 0);
+
+	/* Call function */
+
+	lua_call(L, 2, 0);
+
+	/* Cleanup stack */
+
+	lua_pop(L, 1);
 }
 
 
 int l_gc(lua_State *L)
 {
+	return 0;
+
 	struct wrap *w = lua_touserdata(L, 1);
 	uint32_t s = w->control->TypeSignature;
 	printf("gc %p %c%c%c%c\n", w->control, s >> 24, s >> 16, s >> 8, s >> 0);
-
-	return 0;
 
 	uiControl *control = CAST_ARG(1, Control);
 	uiControl *parent = uiControlParent(control);
@@ -204,8 +222,7 @@ int l_NewButton(lua_State *L)
 
 static void on_button_clicked(uiButton *b, void *data)
 {
-	struct wrap *w = data;
-	callback(w);
+	callback(data, b);
 }
 
 int l_ButtonSetText(lua_State *L)
@@ -218,8 +235,8 @@ int l_ButtonSetText(lua_State *L)
 
 int l_ButtonOnClicked(lua_State *L)
 {
-        struct wrap *w = create_callback_data(L, 1);
-        uiButtonOnClicked(uiButton(w->control), on_button_clicked, w);
+        uiButtonOnClicked(CAST_ARG(1, Button), on_button_clicked, L);
+        create_callback_data(L, 1);
         RETURN_SELF;
 }
 
@@ -244,8 +261,7 @@ int l_NewCheckbox(lua_State *L)
 
 static void on_checkbox_toggled(uiCheckbox *c, void *data)
 {
-	struct wrap *w = data;
-	callback(w);
+	callback(data, c);
 }
 
 int l_CheckboxSetText(lua_State *L)
@@ -258,8 +274,8 @@ int l_CheckboxSetText(lua_State *L)
 
 int l_CheckboxOnToggled(lua_State *L)
 {
-        struct wrap *w = create_callback_data(L, 1);
-        uiCheckboxOnToggled(uiCheckbox(w->control), on_checkbox_toggled, w);
+        uiCheckboxOnToggled(CAST_ARG(1, Checkbox), on_checkbox_toggled, L);
+        create_callback_data(L, 1);
         RETURN_SELF;
 }
 
@@ -288,8 +304,7 @@ int l_NewEditableCombobox(lua_State *L)
 
 static void on_combobox_selected(uiCombobox *c, void *data)
 {
-	struct wrap *w = data;
-	callback(w);
+	callback(data, c);
 }
 
 int l_ComboboxAppend(lua_State *L)
@@ -306,8 +321,8 @@ int l_ComboboxAppend(lua_State *L)
 
 int l_ComboboxOnToggled(lua_State *L)
 {
-        struct wrap *w = create_callback_data(L, 1);
-        uiComboboxOnSelected(uiCombobox(w->control), on_combobox_selected, w);
+        uiComboboxOnSelected(CAST_ARG(1, Combobox), on_combobox_selected, L);
+        create_callback_data(L, 1);
         RETURN_SELF;
 }
 
@@ -538,14 +553,13 @@ int l_SliderSetValue(lua_State *L)
 
 static void on_slider_changed(uiSlider *b, void *data)
 {
-	struct wrap *w = data;
-	callback(w);
+	callback(data, b);
 }
 
 int l_SliderOnChanged(lua_State *L)
 {
-	struct wrap *w = create_callback_data(L, 1);
-	uiSliderOnChanged(uiSlider(w->control), on_slider_changed, w);
+	uiSliderOnChanged(CAST_ARG(1, Slider), on_slider_changed, L);
+	create_callback_data(L, 1);
 	RETURN_SELF;
 }
 
@@ -585,14 +599,13 @@ int l_SpinboxSetValue(lua_State *L)
 
 static void on_spinbox_changed(uiSpinbox *b, void *data)
 {
-	struct wrap *w = data;
-	callback(w);
+	callback(data, b);
 }
 
 int l_SpinboxOnChanged(lua_State *L)
 {
-	struct wrap *w = create_callback_data(L, 1);
-	uiSpinboxOnChanged(uiSpinbox(w->control), on_spinbox_changed, w);
+	uiSpinboxOnChanged(CAST_ARG(1, Spinbox), on_spinbox_changed, L);
+	create_callback_data(L, 1);
 	RETURN_SELF;
 }
 
