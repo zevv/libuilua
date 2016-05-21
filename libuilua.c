@@ -150,10 +150,23 @@ int l_NewHorizontalBox(lua_State *L)
 
 int l_BoxAppend(lua_State *L)
 {
-	uiBoxAppend(UI_CAST(1, Box), UI_CAST(2, Control), lua_toboolean(L, 3));
-	lua_getmetatable(L, 1);
-	lua_pushvalue(L, 2);
-	luaL_ref(L, -2);
+	int n = lua_gettop(L);
+	int stretchy = 0;
+
+	if(lua_isnumber(L, n) || lua_isboolean(L, n)) {
+		stretchy = lua_toboolean(L, n);
+	}
+
+	int i;
+
+	for(i=2; i<=n; i++) {
+		if(lua_isuserdata(L, i)) {
+			uiBoxAppend(UI_CAST(1, Box), UI_CAST(i, Control), stretchy);
+			lua_getmetatable(L, 1);
+			lua_pushvalue(L, i);
+			luaL_ref(L, -2);
+		}
+	}
 	RETURN_SELF;
 }
 
@@ -283,8 +296,12 @@ static void on_combobox_selected(uiCombobox *c, void *data)
 int l_ComboboxAppend(lua_State *L)
 {
 	struct wrap *w = lua_touserdata(L, 1);
-	const char *text = luaL_checkstring(L, 2);
-	uiComboboxAppend(uiCombobox(w->control), text);
+	int n = lua_gettop(L);
+	int i;
+	for(i=2; i<=n; i++) {
+		const char *text = luaL_checkstring(L, n);
+		uiComboboxAppend(uiCombobox(w->control), text);
+	}
 	RETURN_SELF;
 }
 
@@ -434,8 +451,12 @@ int l_NewRadioButtons(lua_State *L)
 int l_RadioButtonsAppend(lua_State *L)
 {
 	struct wrap *w = lua_touserdata(L, 1);
-	const char *text = luaL_checkstring(L, 2);
-	uiRadioButtonsAppend(uiRadioButtons(w->control), text);
+	int n = lua_gettop(L);
+	int i;
+	for(i=2; i<=n; i++) {
+		const char *text = luaL_checkstring(L, i);
+		uiRadioButtonsAppend(uiRadioButtons(w->control), text);
+	}
 	RETURN_SELF;
 }
 
@@ -569,10 +590,14 @@ int l_NewTab(lua_State *L)
 
 int l_TabAppend(lua_State *L)
 {
-	uiTabAppend(UI_CAST(1, Tab), luaL_checkstring(L, 2), UI_CAST(3, Control));
-	lua_getmetatable(L, 1);
-	lua_pushvalue(L, 3);
-	luaL_ref(L, -2);
+	int n = lua_gettop(L);
+	int i;
+	for(i=2; i<=n; i+=2) {
+		uiTabAppend(UI_CAST(1, Tab), luaL_checkstring(L, i+0), UI_CAST(i+1, Control));
+		lua_getmetatable(L, 1);
+		lua_pushvalue(L, 3);
+		luaL_ref(L, -2);
+	}
 	RETURN_SELF;
 }
 
