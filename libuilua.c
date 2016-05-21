@@ -595,7 +595,7 @@ int l_TabAppend(lua_State *L)
 	for(i=2; i<=n; i+=2) {
 		uiTabAppend(UI_CAST(1, Tab), luaL_checkstring(L, i+0), UI_CAST(i+1, Control));
 		lua_getmetatable(L, 1);
-		lua_pushvalue(L, 3);
+		lua_pushvalue(L, i+1);
 		luaL_ref(L, -2);
 	}
 	RETURN_SELF;
