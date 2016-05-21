@@ -622,9 +622,9 @@ int l_NewWindow(lua_State *L)
 		luaL_checknumber(L, 2),
 		lua_toboolean(L, 3)
 	));
-	lua_pushvalue(L, -1);
-	lua_pushboolean(L, 1);
-	lua_settable(L, LUA_REGISTRYINDEX);
+--	lua_pushvalue(L, -1);
+--	lua_pushboolean(L, 1);
+--	lua_settable(L, LUA_REGISTRYINDEX);
 	return 1;
 }
 
