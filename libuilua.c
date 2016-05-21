@@ -658,8 +658,8 @@ int l_NewWindow(lua_State *L)
 	CREATE_OBJECT(Window, uiNewWindow(
 		luaL_checkstring(L, 1),
 		luaL_checknumber(L, 2),
-		luaL_checknumber(L, 2),
-		lua_toboolean(L, 3)
+		luaL_checknumber(L, 3),
+		lua_toboolean(L, 4)
 	));
 	return 1;
 }

@@ -18,8 +18,7 @@ spinbox = ui.NewSpinbox(0, 100):OnChanged(update)
 slider = ui.NewSlider(0, 100):OnChanged(update)
 progressbar = ui.NewProgressBar(0, 100)
 
-
-win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
+local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 	ui.NewVerticalBox():Append(
 		ui.NewHorizontalBox():Append(
 			ui.NewGroup("Basic Controls"):SetMargined(1):SetChild(
