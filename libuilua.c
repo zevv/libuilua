@@ -28,6 +28,8 @@
 	lua_newtable(L); \
 	luaL_getmetatable(L, "libui." #t); \
 	lua_setfield(L, -2, "__index"); \
+	lua_pushcfunction(L, l_gc); \
+	lua_setfield(L, -2, "__gc"); \
 	lua_setmetatable(L, -2);
 
 
@@ -35,13 +37,17 @@
 enum control_type {
 	TYPE_Box,
 	TYPE_Button,
+	TYPE_Checkbox,
+	TYPE_Combobox,
 	TYPE_Control,
 	TYPE_Group,
 	TYPE_Label,
 	TYPE_ProgressBar,
+	TYPE_RadioButtons,
 	TYPE_Separator,
 	TYPE_Slider,
 	TYPE_Spinbox,
+	TYPE_Tab,
 	TYPE_Window,
 };
 
@@ -82,6 +88,32 @@ static void callback(struct wrap *w)
 }
 
 
+int l_gc(lua_State *L)
+{
+	struct wrap *w = lua_touserdata(L, 1);
+	uint32_t s = w->control->TypeSignature;
+	printf("gc %p %c%c%c%c\n", w->control, s >> 24, s >> 16, s >> 8, s >> 0);
+	return 0;
+
+	uiControl *control = UI_CAST(1, Control);
+
+	uiControl *parent = uiControlParent(control);
+	
+	if(parent) {
+		if(parent->TypeSignature == 0x57696E64) {
+			uiWindowSetChild(uiWindow(parent), NULL);
+		}
+		if(parent->TypeSignature == 0x426F784C) {
+			uiWindowSetChild(uiWindow(parent), NULL);
+		}
+		printf("  Unparent %p %p\n", control, parent);
+		uiControlSetParent(control, NULL);
+	}
+	uiControlDestroy(control);
+
+	return 0;
+}
+
 /*
  * Control
  */
@@ -98,6 +130,52 @@ int l_ControlDestroy(lua_State *L)
 	printf("destroy not implemented, garbage collection needs to be implemented\n");
 	return 0;
 }
+
+
+/*
+ * Box
+ */
+
+int l_NewVerticalBox(lua_State *L)
+{
+	CREATE_OBJECT(Box, uiNewVerticalBox());
+	return 1;
+}
+
+int l_NewHorizontalBox(lua_State *L)
+{
+	CREATE_OBJECT(Box, uiNewHorizontalBox());
+	return 1;
+}
+
+int l_BoxAppend(lua_State *L)
+{
+	uiBoxAppend(UI_CAST(1, Box), UI_CAST(2, Control), lua_toboolean(L, 3));
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, 2);
+	luaL_ref(L, -2);
+	RETURN_SELF;
+}
+
+int l_BoxPadded(lua_State *L)
+{
+	lua_pushnumber(L, uiBoxPadded(UI_CAST(1, Box)));
+	return 1;
+}
+
+int l_BoxSetPadded(lua_State *L)
+{
+	uiBoxSetPadded(UI_CAST(1, Box), luaL_checknumber(L, 2));
+	RETURN_SELF;
+}
+
+
+static struct luaL_Reg meta_Box[] = {
+	{ "Append",               l_BoxAppend },
+	{ "Padded",               l_BoxPadded },
+	{ "SetPadded",            l_BoxSetPadded },
+	{ NULL }
+};
 
 
 /*
@@ -138,6 +216,91 @@ static struct luaL_Reg meta_Button[] = {
 	{ "OnClicked",            l_ButtonOnClicked },
 	{ NULL }
 };
+
+
+/*
+ * Checkbox
+ */
+
+int l_NewCheckbox(lua_State *L)
+{
+	CREATE_OBJECT(Checkbox, uiNewCheckbox(
+		luaL_checkstring(L, 1)
+	));
+	return 1;
+}
+
+static void on_checkbox_toggled(uiCheckbox *c, void *data)
+{
+	struct wrap *w = data;
+	callback(w);
+}
+
+int l_CheckboxSetText(lua_State *L)
+{
+	struct wrap *w = lua_touserdata(L, 1);
+	const char *text = luaL_checkstring(L, 2);
+	uiCheckboxSetText(uiCheckbox(w->control), text);
+	RETURN_SELF;
+}
+
+int l_CheckboxOnToggled(lua_State *L)
+{
+        struct wrap *w = create_callback_data(L, 1);
+        uiCheckboxOnToggled(uiCheckbox(w->control), on_checkbox_toggled, w);
+        RETURN_SELF;
+}
+
+static struct luaL_Reg meta_Checkbox[] = {
+	{ "SetText",              l_CheckboxSetText },
+	{ "OnToggled",            l_CheckboxOnToggled },
+	{ NULL }
+};
+
+
+/*
+ * Combobox
+ */
+
+int l_NewCombobox(lua_State *L)
+{
+	CREATE_OBJECT(Combobox, uiNewCombobox());
+	return 1;
+}
+
+int l_NewEditableCombobox(lua_State *L)
+{
+	CREATE_OBJECT(Combobox, uiNewEditableCombobox());
+	return 1;
+}
+
+static void on_combobox_selected(uiCombobox *c, void *data)
+{
+	struct wrap *w = data;
+	callback(w);
+}
+
+int l_ComboboxAppend(lua_State *L)
+{
+	struct wrap *w = lua_touserdata(L, 1);
+	const char *text = luaL_checkstring(L, 2);
+	uiComboboxAppend(uiCombobox(w->control), text);
+	RETURN_SELF;
+}
+
+int l_ComboboxOnToggled(lua_State *L)
+{
+        struct wrap *w = create_callback_data(L, 1);
+        uiComboboxOnSelected(uiCombobox(w->control), on_combobox_selected, w);
+        RETURN_SELF;
+}
+
+static struct luaL_Reg meta_Combobox[] = {
+	{ "Append",               l_ComboboxAppend },
+	{ "OnToggled",            l_ComboboxOnToggled },
+	{ NULL }
+};
+
 
 
 
@@ -257,6 +420,33 @@ static struct luaL_Reg meta_ProgressBar[] = {
 };
 
 
+/*
+ * RadioButtons
+ */
+
+int l_NewRadioButtons(lua_State *L)
+{
+	CREATE_OBJECT(RadioButtons, uiNewRadioButtons());
+	return 1;
+}
+
+
+int l_RadioButtonsAppend(lua_State *L)
+{
+	struct wrap *w = lua_touserdata(L, 1);
+	const char *text = luaL_checkstring(L, 2);
+	uiRadioButtonsAppend(uiRadioButtons(w->control), text);
+	RETURN_SELF;
+}
+
+
+static struct luaL_Reg meta_RadioButtons[] = {
+	{ "Append",               l_RadioButtonsAppend },
+	{ NULL }
+};
+
+
+
 
 /*
  * Separator
@@ -367,6 +557,34 @@ static struct luaL_Reg meta_Spinbox[] = {
 };
 
 
+/*
+ * Tab
+ */
+
+int l_NewTab(lua_State *L)
+{
+	CREATE_OBJECT(Tab, uiNewTab());
+	return 1;
+}
+
+int l_TabAppend(lua_State *L)
+{
+	uiTabAppend(UI_CAST(1, Tab), luaL_checkstring(L, 2), UI_CAST(3, Control));
+	lua_getmetatable(L, 1);
+	lua_pushvalue(L, 3);
+	luaL_ref(L, -2);
+	RETURN_SELF;
+}
+
+static struct luaL_Reg meta_Tab[] = {
+	{ "Append",               l_TabAppend },
+	{ NULL }
+};
+
+
+
+
+
 /* 
  * Window
  */
@@ -395,56 +613,17 @@ int l_WindowSetChild(lua_State *L)
 	RETURN_SELF;
 }
 
+int l_WindowSetMargined(lua_State *L)
+{
+	uiWindowSetMargined(UI_CAST(1, Window), luaL_checknumber(L, 2));
+	RETURN_SELF;
+}
+
 static struct luaL_Reg meta_Window[] = {
 	{ "SetChild",            l_WindowSetChild },
+	{ "SetMargined",         l_WindowSetMargined },
 	{ "Show",                l_ControlShow },
 	{ "Destroy",             l_ControlDestroy },
-	{ NULL }
-};
-
-
-/*
- * Box
- */
-
-int l_NewVerticalBox(lua_State *L)
-{
-	CREATE_OBJECT(Box, uiNewVerticalBox());
-	return 1;
-}
-
-int l_NewHorizontalBox(lua_State *L)
-{
-	CREATE_OBJECT(Box, uiNewHorizontalBox());
-	return 1;
-}
-
-int l_BoxAppend(lua_State *L)
-{
-	uiBoxAppend(UI_CAST(1, Box), UI_CAST(2, Control), lua_toboolean(L, 3));
-	lua_getmetatable(L, 1);
-	lua_pushvalue(L, 2);
-	luaL_ref(L, -2);
-	RETURN_SELF;
-}
-
-int l_BoxPadded(lua_State *L)
-{
-	lua_pushnumber(L, uiBoxPadded(UI_CAST(1, Box)));
-	return 1;
-}
-
-int l_BoxSetPadded(lua_State *L)
-{
-	uiBoxSetPadded(UI_CAST(1, Box), luaL_checknumber(L, 2));
-	RETURN_SELF;
-}
-
-
-static struct luaL_Reg meta_Box[] = {
-	{ "Append",               l_BoxAppend },
-	{ "Padded",               l_BoxPadded },
-	{ "SetPadded",            l_BoxSetPadded },
 	{ NULL }
 };
 
@@ -491,16 +670,21 @@ static struct luaL_Reg lui_table[] = {
 	{ "Main",                   l_Main },
 	{ "Quit",                   l_Quit },
 
-	{ "NewWindow",              l_NewWindow },
 	{ "NewButton",              l_NewButton },
-	{ "NewVerticalBox",         l_NewVerticalBox },
+	{ "NewCheckbox",            l_NewCheckbox },
+	{ "NewCombobox",            l_NewCombobox },
+	{ "NewEditableCombobox",    l_NewEditableCombobox },
+	{ "NewGroup",               l_NewGroup },
 	{ "NewHorizontalBox",       l_NewHorizontalBox },
 	{ "NewHorizontalSeparator", l_NewHorizontalSeparator },
-	{ "NewGroup",               l_NewGroup },
 	{ "NewLabel",               l_NewLabel },
+	{ "NewProgressBar",         l_NewProgressBar },
+	{ "NewRadioButtons",        l_NewRadioButtons },
 	{ "NewSlider",              l_NewSlider },
 	{ "NewSpinbox",             l_NewSpinbox },
-	{ "NewProgressBar",         l_NewProgressBar },
+	{ "NewTab",                 l_NewTab },
+	{ "NewVerticalBox",         l_NewVerticalBox },
+	{ "NewWindow",              l_NewWindow },
 
 
 	{ NULL }
@@ -513,12 +697,16 @@ int luaopen_libuilua(lua_State *L)
 
 	CREATE_META(Box)
 	CREATE_META(Button)
+	CREATE_META(Checkbox)
+	CREATE_META(Combobox)
 	CREATE_META(Group)
 	CREATE_META(Label)
 	CREATE_META(ProgressBar)
 	CREATE_META(Separator)
+	CREATE_META(RadioButtons)
 	CREATE_META(Slider)
 	CREATE_META(Spinbox)
+	CREATE_META(Tab)
 	CREATE_META(Window)
 	luaL_newlib(L, lui_table);
 	return 1;
