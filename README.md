@@ -8,9 +8,11 @@ Lua binding for libui: https://github.com/andlabs/libui
 
 - All uiTypeMethod() functions are accessible as object:Method() calls
 
-- All Set() methods return the object itself, which allow for chaining like 
+- Set() methods return the object itself, which allow for chaining like 
   `s = ui.NewSlider(0, 10):SetValue(5):OnChanged(fn)`
 
+- Append() methods take a variable number of arguments, allowing things
+  like `ui.NewRadioButtons():Append("One", "Two", "Three")
 
 Below is the Lua-equivalent of libui's example/controlgallery:
 
