@@ -60,11 +60,11 @@ local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 							"Page 1", ui.NewHorizontalBox(),
 							"Page 2", ui.NewHorizontalBox(),
 							"Page 3", ui.NewHorizontalBox()
-						), 1
+						), true
 					)
-				), 1
-			), 1
-		), 1
+				), true
+			), true
+		), true
 	)
 )
 
