@@ -108,22 +108,28 @@ int l_gc(lua_State *L)
 	return 0;
 }
 
+
 /*
- * Control
+ * Area
  */
 
-int l_ControlShow(lua_State *L)
+int l_NewArea(lua_State *L)
 {
-	uiControlShow(CAST_ARG(1, Control));
+	static struct uiAreaHandler ah;
+	CREATE_OBJECT(Area, uiNewArea(&ah));
+	return 1;
+}
+
+int l_AreaSetSize(lua_State *L)
+{
+	uiAreaSetSize(CAST_ARG(1, Area), luaL_checknumber(L, 2), luaL_checknumber(L, 3));
 	RETURN_SELF;
 }
-
-
-int l_ControlDestroy(lua_State *L)
-{
-	printf("destroy not implemented, garbage collection needs to be implemented\n");
-	return 0;
-}
+	
+static struct luaL_Reg meta_Area[] = {
+	{ "SetSize",              l_AreaSetSize },
+	{ NULL }
+};
 
 
 /*
@@ -303,6 +309,25 @@ static struct luaL_Reg meta_Combobox[] = {
 	{ "OnToggled",            l_ComboboxOnToggled },
 	{ NULL }
 };
+
+
+/*
+ * Control
+ */
+
+int l_ControlShow(lua_State *L)
+{
+	uiControlShow(CAST_ARG(1, Control));
+	RETURN_SELF;
+}
+
+
+int l_ControlDestroy(lua_State *L)
+{
+	printf("destroy not implemented, garbage collection needs to be implemented\n");
+	return 0;
+}
+
 
 
 /*
@@ -687,6 +712,13 @@ int l_Main(lua_State *L)
 	return 0;
 }
 
+int l_MainStep(lua_State *L)
+{
+	int r = uiMainStep(lua_toboolean(L, 1));
+	lua_pushnumber(L, r);
+	return 1;
+}
+
 int l_Quit(lua_State *L)
 {
 	uiQuit();
@@ -698,8 +730,10 @@ static struct luaL_Reg lui_table[] = {
 	{ "Init",                   l_Init },
 	{ "Uninit",                 l_Uninit },
 	{ "Main",                   l_Main },
+	{ "MainStep",               l_MainStep },
 	{ "Quit",                   l_Quit },
 
+	{ "NewArea",                l_NewArea },
 	{ "NewButton",              l_NewButton },
 	{ "NewCheckbox",            l_NewCheckbox },
 	{ "NewCombobox",            l_NewCombobox },
@@ -728,6 +762,7 @@ int luaopen_libuilua(lua_State *L)
 {
 
 
+	CREATE_META(Area)
 	CREATE_META(Box)
 	CREATE_META(Button)
 	CREATE_META(Checkbox)
