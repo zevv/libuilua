@@ -1,6 +1,6 @@
 #!/usr/bin/lua
 
-ui = require "libuilua"
+local ui = require "libuilua"
 
 ui.Init()
 					
