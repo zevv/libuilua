@@ -1,9 +1,9 @@
 #!/usr/bin/lua
 
-ui = require "libuilua"
+local ui = require "libuilua"
 
 ui.Init()
-					
+
 
 local spinbox, slider, progressbar
 
@@ -14,7 +14,7 @@ local function update(control)
 	progressbar:SetValue(v)
 end
 
-spinbox = ui.NewSpinbox(0, 100):OnChanged(update) 
+spinbox = ui.NewSpinbox(0, 100):OnChanged(update)
 slider = ui.NewSlider(0, 100):OnChanged(update)
 progressbar = ui.NewProgressBar(0, 100)
 
@@ -32,7 +32,7 @@ local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 					ui.NewDateTimePicker(),
 					ui.NewTimePicker()
 				)
-			), 
+			),
 			ui.NewVerticalBox():Append(
 				ui.NewGroup("Numbers"):SetMargined(1):SetChild(
 					ui.NewVerticalBox():SetPadded(1):Append(spinbox, slider, progressbar)

@@ -41,9 +41,9 @@ static void create_callback_data(lua_State *L, int n)
 	/* Push registery key: userdata pointer to control */
 
 	lua_pushlightuserdata(L, CAST_ARG(1, Control));
-	
+
 	/* Create table with callback data */
-	
+
 	lua_newtable(L);
 	lua_pushvalue(L, 1);
 	lua_setfield(L, -2, "udata");
@@ -94,7 +94,7 @@ int l_gc(lua_State *L)
 
 	uiControl *control = CAST_ARG(1, Control);
 	uiControl *parent = uiControlParent(control);
-	
+
 	if(parent) {
 		if(parent->TypeSignature == 0x57696E64) {
 			//uiWindowSetChild(uiWindow(parent), NULL);
@@ -125,7 +125,7 @@ int l_AreaSetSize(lua_State *L)
 	uiAreaSetSize(CAST_ARG(1, Area), luaL_checknumber(L, 2), luaL_checknumber(L, 3));
 	RETURN_SELF;
 }
-	
+
 static struct luaL_Reg meta_Area[] = {
 	{ "SetSize",              l_AreaSetSize },
 	{ NULL }
@@ -643,7 +643,7 @@ static struct luaL_Reg meta_Tab[] = {
 
 
 
-/* 
+/*
  * Window
  */
 
@@ -685,13 +685,13 @@ static struct luaL_Reg meta_Window[] = {
 
 
 /*
- * Various top level 
+ * Various top level
  */
 
 int l_Init(lua_State *L)
 {
 	uiInitOptions o;
-	
+
 	memset(&o, 0, sizeof (uiInitOptions));
 
 	const char *err = uiInit(&o);
