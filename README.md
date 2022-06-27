@@ -16,7 +16,7 @@ Lua binding for libui: https://github.com/andlabs/libui
 
 Below is the Lua-equivalent of libui's example/controlgallery:
 
-````
+```lua
 #!/usr/bin/lua
 
 ui = require "libuilua"
@@ -88,4 +88,4 @@ local win = ui.NewWindow("Hello", 320, 200, false):SetMargined(1):SetChild(
 
 ui.Main()
 
-````
+```lua
